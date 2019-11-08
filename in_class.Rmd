@@ -1,0 +1,141 @@
+---
+title: "In Class"
+author: "Scott Stoltzman"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library('corrplot') # install.packages('corrplot') --> very handy for correlations of large dataframe
+library('mlbench') # install.packages('mlbench')
+library("tidyverse")
+library('caret')
+set.seed(123)
+
+data("PimaIndiansDiabetes") 
+```
+Data: <https://rdrr.io/cran/mlbench/man/PimaIndiansDiabetes.html>
+Data has no `NA` - assume "clean" data for this exercise.
+
+```{r}
+dat = PimaIndiansDiabetes %>% 
+  as_tibble() %>%
+  rename(Class = diabetes) %>%
+  mutate(Class = as.factor(Class))
+head(dat)
+```
+
+
+# What are we going to try to predict?
+Can we predict `pos` or `neg` outcome for diabetes (renamed to `Class`)?
+
+Perform a couple of basic EDA steps.
+
+Start by showing the base rate.
+```{r}
+dat %>%
+  group_by(Class) %>%
+  count() %>%
+  ggplot(aes(x = Class, y = n)) + 
+  geom_col()
+```
+
+Visualize the correlation of all variables using the `corrplot.mixed()` function <https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html>
+```{r}
+corrplot_dat = cor(dat %>% select(-Class))
+corrplot.mixed(corrplot_dat)
+```
+
+
+Separate out test vs train --> assume training on 75% of data  
+
+How could this be improved? Be careful where you make changes!
+```{r}
+dat_id = dat %>%
+  mutate(id = row_number())
+
+training_split = 0.75 
+
+dat_train = dat_id %>%
+  sample_frac(0.75)
+
+dat_test = dat_id %>%
+  anti_join(dat_train, by = 'id') %>%
+  select(-id)
+
+dat_train = dat_train %>% select(-id)
+
+```
+
+
+Complete any resampling
+```{r}
+dat_train_up = upSample(dat_train %>% select(-Class),
+                        dat_train %>% select(Class) %>% pull())
+```
+
+
+Recall our random forest model...
+```{r, warning=FALSE}
+train_control = trainControl(method = 'cv')
+
+mod_rf = train(dat_train_up %>% select(-Class), 
+                dat_train_up$Class, 
+                method = 'ranger',
+                importance = "impurity",
+                trControl = train_control)
+
+pred_rf = predict(mod_rf, dat_test)
+
+mod_rf
+```
+
+```{r}
+confusionMatrix(pred_rf, dat_test %>% select(Class) %>% pull())
+```
+
+
+```{r}
+mod_rf$finalModel
+```
+
+
+```{r}
+plot(caret::varImp(mod_rf))
+```
+
+
+
+
+Then try a neural network
+```{r, warning=FALSE}
+train_control = trainControl(method = 'cv', classProbs = TRUE)
+
+mod_nn = train(dat_train_up %>% select(-Class), 
+                dat_train_up$Class, 
+                method = 'nnet',
+               metric = 'ROC',
+               verbose = FALSE,
+                trControl = train_control)
+
+pred_nn = predict(mod_nn, dat_test)
+
+mod_nn
+```
+
+```{r}
+confusionMatrix(pred_nn, dat_test %>% select(Class) %>% pull())
+```
+
+```{r}
+mod_nn$finalModel
+```
+
+
+```{r}
+summary(mod_nn$finalModel)
+```
+
+

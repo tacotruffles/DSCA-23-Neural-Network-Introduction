@@ -1,0 +1,79 @@
+---
+title: "Pop Quiz"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+```
+
+
+
+# Please complete the following  
+
+Assume that you have the following packages loaded:
+
+```{r message=FALSE}
+library('kableExtra')
+library('tidyverse')
+library('caret')
+
+# Output function for printing to pdf
+tbl_out = function(df, rows = 10){
+  head(df, rows) %>%
+    kable() %>%
+    kable_styling()
+  }
+```
+
+
+Given the `iris` data set (first 10 rows shown below):  
+```{r}
+dat = iris %>% as_tibble()
+tbl_out(dat)
+```
+
+\newpage
+
+In words, describe what you would expect this to return:
+```{r echo=TRUE, message=FALSE, eval=FALSE}
+dat %>% 
+  sample_n(nrow(dat)) %>%
+  tbl_out()
+```
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  
+
+Assuming your data is "clean" and your EDA has been accomplished. What steps would you take to get your data prepared for a classification algorithm?  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+
+\newpage 
+  
+Show the rough code you would use to get your data ready and then train a model using `caret` and show how you would analyze and look at the results.   -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
+  -  
